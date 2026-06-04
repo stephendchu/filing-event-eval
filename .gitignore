@@ -1,0 +1,22 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Data & local stores (large / fetched — not version-controlled)
+data/filings/
+data/chroma/
+results/
+
+# Phoenix / traces
+.phoenix/
+
+# OS
+.DS_Store
