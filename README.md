@@ -49,6 +49,28 @@ EDGAR (10-K/8-K) ─► ingest (chunk + embed) ─► Chroma
 3. **Citation accuracy** — does the cited span actually support the event? (entailment check, LLM-judge.)
 4. **(Extension) Event-contract calibration** — events → binary "will it happen?" questions; score stated confidence vs realized outcome over time (Brier score / calibration curve). This isolates decision quality from noise.
 
+## What we extract — and what happens when it's missing
+The value is in *specific typed artifacts*, and the reliability question is **what
+happens when the one you want isn't there.** Each artifact has a **defined absence
+behavior**, and every failure is a **measured, traced signal** — it flows into the
+same Phoenix/OpenTelemetry spans and eval metrics as everything else, never silent
+and never fabricated.
+
+| Artifact | When present | When missing / wrong |
+|---|---|---|
+| **Quantitative fact** (e.g. "revenue up") | value + unit + period + **grounded citation** | not in filing → `not_disclosed` (never invented); no unit/period → `incomplete`; in a table → `low_confidence` |
+| **Forward-looking commitment** | claim + deadline + settlement source | no deadline → `not_settleable`; vague/conditional → `low_settleability` |
+| **Entity / issuer** | CIK + ticker, resolved **as-of the filing date** | ambiguous → candidates (never guess); old filing → `asof_risk` |
+| **Legal / regulatory** | matter + status | open outcome → flagged, kept as an open question |
+
+**Anti-fabrication, proven on real data:** asked for Apple's *iPhone unit sales*
+(which Apple stopped disclosing in 2018), the system returns **`not_disclosed`** —
+and won't surface even a famous number unless it's grounded in the text. Asked for
+*R&D expense*, it returns the grounded figure (`34,550`, FY25).
+
+→ Full detail: **[docs/ARTIFACTS.md](docs/ARTIFACTS.md)** (artifacts + absence handling) ·
+**[docs/RELIABILITY.md](docs/RELIABILITY.md)** (failures as measured signals).
+
 ## Build slices
 - [x] **Slice 1 — EDGAR ingest:** fetch a 10-K from EDGAR (ticker → CIK → latest), section-aware parse by Item. *(Deterministic — vector store deferred until cross-filing queries justify it.)*
 - [x] **Slice 2 — extraction:** cited per-section event extraction (treatment) + naive baseline (control).
