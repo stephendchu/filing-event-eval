@@ -84,11 +84,16 @@ def run(tickers, n_sections=3, do_settle=True):
 
         grounded = [e for e in treat if e.grounded]
         n_settle = 0
+        samples = []
         if do_settle:
             for e in grounded[:10]:  # cap for cost/throttle
                 c = retry(lambda e=e: classify(e.event, e.citation), f"{tk}/settle")
-                if c and c.settleable:
-                    n_settle += 1
+                if c:
+                    if c.settleable:
+                        n_settle += 1
+                    if len(samples) < 5:  # keep a few for the spot-check
+                        samples.append({"event": e.event[:90], "settleable": c.settleable,
+                                        "reason": c.reason, "question": c.question})
                 time.sleep(SPACING)
 
         row = {
@@ -99,7 +104,8 @@ def run(tickers, n_sections=3, do_settle=True):
             "treatment": {"events": len(treat), "grounded": len(grounded),
                           "grounding_rate": _grate(treat),
                           "settleable_of_grounded": n_settle,
-                          "valid_candidate_yield": round(n_settle / len(treat), 3) if treat else None},
+                          "valid_candidate_yield": round(n_settle / len(treat), 3) if treat else None,
+                          "settle_samples": samples},
         }
         rows.append(row)
         (OUT / "results.json").write_text(json.dumps(rows, indent=2))

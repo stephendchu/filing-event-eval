@@ -44,25 +44,45 @@ class Event:
     grounded: bool | None = None  # set by the grounding check
 
 
-def _call_model(prompt: str, model: str) -> str:
+def _call_model(prompt: str, model: str, max_tokens: int = 4000) -> str:
     msg = anthropic.Anthropic().messages.create(
-        model=model, max_tokens=2000,
+        model=model, max_tokens=max_tokens,
         messages=[{"role": "user", "content": prompt}],
     )
     return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
 
 
+def _json_objects(text: str) -> list[dict]:
+    """Recover every complete top-level {...} object from text.
+
+    Brace-scans instead of requiring a complete [...] array, so a JSON array that
+    got *truncated* by the output-token cap still yields all the complete objects
+    before the cut (the last partial one is simply dropped). Also tolerant of code
+    fences / surrounding prose.
+    """
+    objs: list[dict] = []
+    depth = 0
+    start = None
+    for i, ch in enumerate(text):
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}" and depth > 0:
+            depth -= 1
+            if depth == 0 and start is not None:
+                try:
+                    objs.append(json.loads(text[start:i + 1]))
+                except json.JSONDecodeError:
+                    pass
+                start = None
+    return objs
+
+
 def parse_events(raw: str, item: str) -> list[Event]:
-    """Parse the model's JSON array into Events (tolerant of fences / extra prose)."""
-    m = re.search(r"\[.*\]", raw, re.S)
-    if not m:
-        return []
-    try:
-        data = json.loads(m.group(0))
-    except json.JSONDecodeError:
-        return []
+    """Parse the model's JSON into Events (tolerant of fences, prose, truncation)."""
     out: list[Event] = []
-    for d in data:
+    for d in _json_objects(raw):
         if isinstance(d, dict) and d.get("event"):
             out.append(Event(
                 event=str(d.get("event", "")).strip(),

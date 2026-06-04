@@ -25,7 +25,10 @@ with "event", "type", and "citation".
 def extract_baseline(full_text: str, model: str | None = None):
     """Naive whole-filing single-prompt extraction (control). Cited, then grounded
     against the full text — the same grounding bar the treatment is held to."""
-    raw = _call_model(BASELINE_PROMPT.format(text=full_text[:60000]), model or CFG.model)
+    # Whole-filing extraction lists many events -> needs a large output budget, or the
+    # JSON array truncates. (The earlier 0-event baseline was exactly this artifact.)
+    raw = _call_model(BASELINE_PROMPT.format(text=full_text[:60000]), model or CFG.model,
+                      max_tokens=8000)
     events = parse_events(raw, item="?")
     for e in events:
         e.grounded = is_grounded(e.citation, full_text)
