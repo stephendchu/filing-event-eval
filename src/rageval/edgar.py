@@ -21,12 +21,26 @@ def _client() -> httpx.Client:
                         timeout=30, follow_redirects=True)
 
 
+_TICKERS_CACHE: list[dict] | None = None
+
+
+def company_tickers() -> list[dict]:
+    """All SEC company-ticker rows [{cik_str, ticker, title}, ...] (cached in-process).
+
+    This is the reference-data index the entity resolver maps against. Note it is
+    the *current* mapping — see resolve.py for the as-of-date caveat.
+    """
+    global _TICKERS_CACHE
+    if _TICKERS_CACHE is None:
+        with _client() as c:
+            _TICKERS_CACHE = list(c.get(_TICKERS_URL).json().values())
+    return _TICKERS_CACHE
+
+
 def ticker_to_cik(ticker: str) -> str:
     """Resolve a ticker to its zero-padded 10-digit CIK."""
-    with _client() as c:
-        data = c.get(_TICKERS_URL).json()
     t = ticker.upper()
-    for row in data.values():
+    for row in company_tickers():
         if row["ticker"].upper() == t:
             return str(row["cik_str"]).zfill(10)
     raise ValueError(f"ticker {ticker!r} not found in SEC company_tickers")
