@@ -51,21 +51,43 @@ EDGAR (10-K/8-K) ─► ingest (chunk + embed) ─► Chroma
 
 ## Build slices
 - [x] **Slice 1 — EDGAR ingest:** fetch a 10-K from EDGAR (ticker → CIK → latest), section-aware parse by Item. *(Deterministic — vector store deferred until cross-filing queries justify it.)*
-- [ ] **Slice 2 — extraction agent:** retrieve → extract events with citations (structured JSON).
-- [ ] **Slice 3 — eval harness:** faithfulness + citation accuracy + precision/recall, traced.
+- [x] **Slice 2 — extraction:** cited per-section event extraction (treatment) + naive baseline (control).
+- [~] **Slice 3 — eval + observability:** faithfulness (grounding rate) + Phoenix/OTel tracing across the pipeline. *(citation accuracy + precision/recall next)*
 - [ ] **Slice 4 — event-contract framing + calibration.**
 
 ## Stack
 Python · Anthropic Claude (SDK) · Chroma · sentence-transformers · **Arize Phoenix + OpenTelemetry** · LLM-as-judge evals.
 
-## Quickstart
+## Quickstart (WSL / Linux / macOS)
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env          # add ANTHROPIC_API_KEY
+cp .env.example .env          # add ANTHROPIC_API_KEY and your SEC_USER_AGENT
 
-python -m rageval.ingest --ticker AAPL --form 10-K   # fetch + embed a filing
-python -m rageval.extract --ticker AAPL              # extract events + citations
-python -m rageval.eval --ticker AAPL                 # score grounding + citations
+# Traced pipeline: ingest -> cited extraction -> faithfulness eval
+PYTHONPATH=src python -m rageval.pipeline --ticker AAPL --sections 3
+```
+
+## Learn the tracing (read this while it runs)
+A **span** is one timed unit of work with attributes (inputs/outputs/metadata).
+This pipeline emits spans for each stage (`ingest`, `extract`, `extract.section`,
+`eval.faithfulness`) and — via the Anthropic instrumentation — **one span per
+Claude call** (prompt, token counts, latency).
+
+- **Raw view (always on):** spans print to your terminal as JSON the moment they
+  finish — exactly what an observability tool ingests.
+- **Visual view (Phoenix UI):** add `PHOENIX=1` to see the same traces at
+  **http://localhost:6006** (a tree of nested spans + the LLM I/O). On WSL, open
+  that URL in your Windows browser.
+
+```bash
+PHOENIX=1 PYTHONPATH=src python -m rageval.pipeline --ticker AAPL --sections 3
+```
+Look at the root `pipeline` span, its `extract.section` children, and the nested
+**Claude call** spans inside them — that nesting *is* the agent's execution path.
+
+## Running the tests
+```bash
+PYTHONPATH=src python -m pytest tests/ -q     # offline; no API key needed
 ```
 *Learning + portfolio project — public, SEC EDGAR data only, no proprietary content.*
