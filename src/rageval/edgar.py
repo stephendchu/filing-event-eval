@@ -21,6 +21,26 @@ def _client() -> httpx.Client:
                         timeout=30, follow_redirects=True)
 
 
+def _should_retry(status: int) -> bool:
+    """Transient faults retry (429 + 5xx); 4xx (e.g. 403 bad User-Agent, 404) fail fast."""
+    return status == 429 or status >= 500
+
+
+def _get(url: str) -> httpx.Response:
+    """GET with bounded exponential backoff on transient EDGAR faults."""
+    last = None
+    with _client() as c:
+        for attempt in range(CFG.edgar_max_attempts):
+            r = c.get(url)
+            if not _should_retry(r.status_code):
+                r.raise_for_status()   # config errors fail fast with an actionable status
+                return r
+            last = r
+            time.sleep(min(2 ** attempt, 20))  # exponential backoff, capped
+    last.raise_for_status()            # attempts exhausted -> surface the error
+    return last
+
+
 _TICKERS_CACHE: list[dict] | None = None
 
 
@@ -32,8 +52,7 @@ def company_tickers() -> list[dict]:
     """
     global _TICKERS_CACHE
     if _TICKERS_CACHE is None:
-        with _client() as c:
-            _TICKERS_CACHE = list(c.get(_TICKERS_URL).json().values())
+        _TICKERS_CACHE = list(_get(_TICKERS_URL).json().values())
     return _TICKERS_CACHE
 
 
@@ -49,8 +68,7 @@ def ticker_to_cik(ticker: str) -> str:
 def latest_filing(cik: str, form: str = "10-K") -> dict:
     """Metadata for the most recent filing of `form` for a CIK."""
     url = f"{CFG.edgar_data}/submissions/CIK{cik}.json"
-    with _client() as c:
-        data = c.get(url).json()
+    data = _get(url).json()
     recent = data["filings"]["recent"]
     for i, f in enumerate(recent["form"]):
         if f == form:
@@ -74,9 +92,6 @@ def fetch_filing(meta: dict) -> Path:
     FILINGS.mkdir(parents=True, exist_ok=True)
     out = FILINGS / f"{meta['cik']}_{meta['form']}_{meta['report_date']}.html"
     if not out.exists():
-        with _client() as c:
-            r = c.get(url)
-            r.raise_for_status()
-            out.write_text(r.text, encoding="utf-8")
+        out.write_text(_get(url).text, encoding="utf-8")
         time.sleep(0.2)  # be polite to SEC
     return out

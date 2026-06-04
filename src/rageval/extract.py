@@ -44,8 +44,24 @@ class Event:
     grounded: bool | None = None  # set by the grounding check
 
 
+_CLIENT: "anthropic.Anthropic | None" = None
+
+
+def _client() -> "anthropic.Anthropic":
+    """Shared Anthropic client with bounded retries + exponential backoff.
+
+    The SDK retries on 429/5xx/timeouts and respects the Retry-After header; we just
+    raise the attempt budget (default 2 is too low for the org tokens/min throttle).
+    """
+    global _CLIENT
+    if _CLIENT is None:
+        _CLIENT = anthropic.Anthropic(max_retries=CFG.llm_max_retries,
+                                      timeout=CFG.request_timeout)
+    return _CLIENT
+
+
 def _call_model(prompt: str, model: str, max_tokens: int = 4000) -> str:
-    msg = anthropic.Anthropic().messages.create(
+    msg = _client().messages.create(
         model=model, max_tokens=max_tokens,
         messages=[{"role": "user", "content": prompt}],
     )

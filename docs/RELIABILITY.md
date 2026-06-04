@@ -18,6 +18,14 @@ and eval metrics as everything else).
 5. **Idempotent + cached.** Filings are cached; re-runs are resumable and don't
    re-hit EDGAR.
 
+## Retries (implemented at both call layers)
+- **LLM calls** — a shared Anthropic client with `max_retries=6` (SDK exponential
+  backoff, respects the `Retry-After` header). Long-running jobs (the experiment
+  runner) add an *outer* bounded retry for sustained tokens/min throttling.
+- **EDGAR calls** — `_get()` retries 429/5xx with capped exponential backoff and
+  **fails fast on 4xx** — a 403 means a bad User-Agent (a config error), not a
+  transient fault, so retrying would just hammer SEC without fixing anything.
+
 ## Failure modes → handling
 | Stage | Failure | Detection | Graceful handling | Observed as |
 |---|---|---|---|---|
