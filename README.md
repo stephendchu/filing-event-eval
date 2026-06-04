@@ -50,7 +50,7 @@ EDGAR (10-K/8-K) ─► ingest (chunk + embed) ─► Chroma
 4. **(Extension) Event-contract calibration** — events → binary "will it happen?" questions; score stated confidence vs realized outcome over time (Brier score / calibration curve). This isolates decision quality from noise.
 
 ## Build slices
-- [ ] **Slice 1 — EDGAR ingest:** fetch 10-K/8-K from EDGAR, chunk (section-aware), embed → Chroma.
+- [x] **Slice 1 — EDGAR ingest:** fetch a 10-K from EDGAR (ticker → CIK → latest), section-aware parse by Item. *(Deterministic — vector store deferred until cross-filing queries justify it.)*
 - [ ] **Slice 2 — extraction agent:** retrieve → extract events with citations (structured JSON).
 - [ ] **Slice 3 — eval harness:** faithfulness + citation accuracy + precision/recall, traced.
 - [ ] **Slice 4 — event-contract framing + calibration.**
