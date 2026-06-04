@@ -37,3 +37,17 @@ def test_section_text_is_captured():
     secs = {s.item: s for s in split_sections(html_to_text(SAMPLE))}
     assert "widget" in secs["1"].text
     assert "risk" in secs["1A"].text
+
+
+def test_cross_reference_duplicates_collapse_to_longest():
+    # A short cross-reference to Item 1 plus the real, longer Item 1 section.
+    text = ("Item 1. See Item 1 of this report for details. " + ("pad " * 60)
+            + " Item 1. Business: we build things at scale. " + ("real " * 120))
+    ones = [s for s in split_sections(text) if s.item == "1"]
+    assert len(ones) == 1                 # deduped
+    assert "Business" in ones[0].text     # kept the canonical (longer) one
+
+
+def test_sections_sorted_by_item_order():
+    items = [s.item for s in split_sections(html_to_text(SAMPLE))]
+    assert items == ["1", "1A", "7"]
