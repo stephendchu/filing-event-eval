@@ -52,8 +52,9 @@ EDGAR (10-K/8-K) ─► ingest (chunk + embed) ─► Chroma
 ## Build slices
 - [x] **Slice 1 — EDGAR ingest:** fetch a 10-K from EDGAR (ticker → CIK → latest), section-aware parse by Item. *(Deterministic — vector store deferred until cross-filing queries justify it.)*
 - [x] **Slice 2 — extraction:** cited per-section event extraction (treatment) + naive baseline (control).
-- [~] **Slice 3 — eval + observability:** faithfulness (grounding rate) + Phoenix/OTel tracing across the pipeline. *(citation accuracy + precision/recall next)*
-- [ ] **Slice 4 — event-contract framing + calibration.**
+- [x] **Slice 3 — eval + observability:** faithfulness (grounding rate) + Phoenix/OTel tracing across the pipeline.
+- [x] **Slice 4 — entity resolution + reliability + typed artifacts:** as-of-date entity resolution (ambiguous/unresolved/drift flags), a reliability/orchestration plan (`docs/RELIABILITY.md`), and typed-artifact lookup with **anti-fabrication** — `not_disclosed` vs grounded values (`docs/ARTIFACTS.md`).
+- [ ] **Slice 5 — settleability filter + baseline-vs-treatment experiment + writeup.**
 
 ## Stack
 Python · Anthropic Claude (SDK) · Chroma · sentence-transformers · **Arize Phoenix + OpenTelemetry** · LLM-as-judge evals.
