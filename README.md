@@ -20,7 +20,7 @@ what the agent extracts, how much has a **verifiable** citation vs a **fabricate
 one. AAPL's ~46% ungrounded is **parsing-driven** (MSFT, clean parse: ~9%) — which is
 exactly why settlement-grade extraction pulls numbers from **structured XBRL**, not
 HTML. The grounding eval makes this visible; the gate refuses to act on it.
-(Whole-filing vs section-aware are compared in [docs/EXPERIMENT.md](docs/EXPERIMENT.md).)*
+(Whole-filing vs section-aware are compared in [docs/EXPERIMENT.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/EXPERIMENT.md).)*
 
 ## What this demonstrates
 - **Faithfulness / hallucination detection** — every event must carry a citation
@@ -29,15 +29,15 @@ HTML. The grounding eval makes this visible; the gate refuses to act on it.
   invented a **prose sentence** explaining it — flagged by a $0 string-match.)
 - **Anti-fabrication** — asked for a metric a company *stopped disclosing* (Apple's
   iPhone unit sales, since 2018), the system returns `not_disclosed`, never a number.
-  ([docs/ARTIFACTS.md](docs/ARTIFACTS.md))
+  ([docs/ARTIFACTS.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/ARTIFACTS.md))
 - **Production reliability** — graceful absence handling, **bounded retries with
   backoff** at the LLM *and* EDGAR layers, failures recorded as *measured, traced*
-  signals. ([docs/RELIABILITY.md](docs/RELIABILITY.md))
+  signals. ([docs/RELIABILITY.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/RELIABILITY.md))
 - **Observability** — Phoenix + OpenTelemetry spans across every stage and every
   LLM call (prompt, tokens, latency).
 - **Honest evaluation** — a controlled baseline-vs-treatment experiment reported as
   the **null it is**: section-aware extraction did *not* improve faithfulness, and
-  its coverage edge is a *truncation artifact* (n=2). ([docs/EXPERIMENT.md](docs/EXPERIMENT.md))
+  its coverage edge is a *truncation artifact* (n=2). ([docs/EXPERIMENT.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/EXPERIMENT.md))
 
 The throughline: **building filing-extraction agents whose behavior is measured,
 traced, and reported truthfully — including when the result is a null.**
@@ -85,8 +85,8 @@ and never fabricated.
 and won't surface even a famous number unless it's grounded in the text. Asked for
 *R&D expense*, it returns the grounded figure (`34,550`, FY25).
 
-→ Full detail: **[docs/ARTIFACTS.md](docs/ARTIFACTS.md)** (artifacts + absence handling) ·
-**[docs/RELIABILITY.md](docs/RELIABILITY.md)** (failures as measured signals).
+→ Full detail: **[docs/ARTIFACTS.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/ARTIFACTS.md)** (artifacts + absence handling) ·
+**[docs/RELIABILITY.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/RELIABILITY.md)** (failures as measured signals).
 
 ## Measuring recall — a human-verified gold set
 Grounding measures **precision** ("are the citations real?"). It does *not* measure
@@ -116,7 +116,7 @@ granularity-matched re-draft + human verification.*
 - [x] **Slice 2 — extraction:** cited per-section event extraction (treatment) + naive baseline (control).
 - [x] **Slice 3 — eval + observability:** faithfulness (grounding rate) + Phoenix/OTel tracing across the pipeline.
 - [x] **Slice 4 — entity resolution + reliability + typed artifacts:** as-of-date entity resolution (ambiguous/unresolved/drift flags), a reliability/orchestration plan (`docs/RELIABILITY.md`), and typed-artifact lookup with **anti-fabrication** — `not_disclosed` vs grounded values (`docs/ARTIFACTS.md`).
-- [x] **Slice 5 — settleability filter + baseline-vs-treatment experiment:** [**docs/EXPERIMENT.md**](docs/EXPERIMENT.md). **An honest null** (n=2): section-aware extraction did *not* improve faithfulness (grounding ~tied), and its coverage edge is largely a *truncation artifact*. Settleability ≈ 0 (most filing statements are risk/historical, not contractable). The value is the eval + anti-fabrication + reliability around it — and the discipline to call a null a null.
+- [x] **Slice 5 — settleability filter + baseline-vs-treatment experiment:** [**docs/EXPERIMENT.md**](https://github.com/stephendchu/filing-event-eval/blob/main/docs/EXPERIMENT.md). **An honest null** (n=2): section-aware extraction did *not* improve faithfulness (grounding ~tied), and its coverage edge is largely a *truncation artifact*. Settleability ≈ 0 (most filing statements are risk/historical, not contractable). The value is the eval + anti-fabrication + reliability around it — and the discipline to call a null a null.
 - [x] **Slice 6 — XBRL numeric path (the settlement-grade fix):** quantitative facts pulled from SEC **XBRL** (exact, zero-hallucination — verified: AAPL R&D = `34,550,000,000`, revenue = `416,161,000,000`, FY2025); the LLM handles only narrative, behind the grounding gate. *(fixes the parsing-driven number hallucination diagnosed in Slice 5.)*
 
 ## Stack
