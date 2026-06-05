@@ -1,0 +1,3 @@
+theme: jekyll-theme-cayman
+title: "filing-event-eval"
+description: "AI for event-contract sourcing from SEC filings — grounded extraction, faithfulness evals, anti-fabrication, reliability, and observability."
