@@ -10,6 +10,26 @@ Built as a learning + portfolio project for AI-evals roles (W&B Weave / Arize /
 Galileo). Aligns with regulated-markets + event-contracts domain. **Public data
 only (SEC EDGAR); no proprietary content.**
 
+## What this demonstrates
+- **Faithfulness / hallucination detection** — every event must carry a citation
+  that's *verbatim-verifiable* in the source; ungrounded citations are flagged.
+  (Caught a real fabrication: a filing presented a tax rate as a **table**, the model
+  invented a **prose sentence** explaining it — flagged by a $0 string-match.)
+- **Anti-fabrication** — asked for a metric a company *stopped disclosing* (Apple's
+  iPhone unit sales, since 2018), the system returns `not_disclosed`, never a number.
+  ([docs/ARTIFACTS.md](docs/ARTIFACTS.md))
+- **Production reliability** — graceful absence handling, **bounded retries with
+  backoff** at the LLM *and* EDGAR layers, failures recorded as *measured, traced*
+  signals. ([docs/RELIABILITY.md](docs/RELIABILITY.md))
+- **Observability** — Phoenix + OpenTelemetry spans across every stage and every
+  LLM call (prompt, tokens, latency).
+- **Honest evaluation** — a controlled baseline-vs-treatment experiment reported as
+  the **null it is**: section-aware extraction did *not* improve faithfulness, and
+  its coverage edge is a *truncation artifact* (n=2). ([docs/EXPERIMENT.md](docs/EXPERIMENT.md))
+
+The throughline: **building filing-extraction agents whose behavior is measured,
+traced, and reported truthfully — including when the result is a null.**
+
 ## The task
 Given a company's 10-K (or 8-K), the agent identifies the **events** described —
 material events, risk factors, and forward-looking statements — and for each
@@ -70,6 +90,29 @@ and won't surface even a famous number unless it's grounded in the text. Asked f
 
 → Full detail: **[docs/ARTIFACTS.md](docs/ARTIFACTS.md)** (artifacts + absence handling) ·
 **[docs/RELIABILITY.md](docs/RELIABILITY.md)** (failures as measured signals).
+
+## Measuring recall — a human-verified gold set
+Grounding measures **precision** ("are the citations real?"). It does *not* measure
+**recall** ("did we find everything that's there?"). Recall needs a **reference list**
+of every event that *should* be found — a gold set — and how you build it matters:
+
+**The trap:** if an AI builds the gold set, you're doing *AI grading AI* — and if the
+reference model shares the system's blind spots, they miss the same buried events and
+recall looks **falsely perfect**. An unverified AI gold set is worthless.
+
+**The workflow** (`scripts/build_gold_set.py`):
+1. **AI drafts** — exhaustively lists candidate events + citations (the word-by-word grunt work).
+2. **A human verifies** — keep/drop, fix citations, **add** anything missed. *That pass breaks the circularity.*
+3. **Match granularity** — the reference must define "an event" the *same way* as the
+   system (atomizing every table cell into 156 items vs the system's 26 consolidated
+   events makes recall meaningless).
+4. **Compute precision *and* recall** against the verified gold.
+
+**Caveat (state it):** even human+AI can miss a deeply-buried item, so recall is "vs the
+best reference we could assemble," not vs omniscience.
+
+*Status: an AI-drafted AAPL gold set exists (`reports/gold/`), pending a
+granularity-matched re-draft + human verification.*
 
 ## Build slices
 - [x] **Slice 1 — EDGAR ingest:** fetch a 10-K from EDGAR (ticker → CIK → latest), section-aware parse by Item. *(Deterministic — vector store deferred until cross-filing queries justify it.)*
