@@ -76,7 +76,7 @@ and won't surface even a famous number unless it's grounded in the text. Asked f
 - [x] **Slice 2 — extraction:** cited per-section event extraction (treatment) + naive baseline (control).
 - [x] **Slice 3 — eval + observability:** faithfulness (grounding rate) + Phoenix/OTel tracing across the pipeline.
 - [x] **Slice 4 — entity resolution + reliability + typed artifacts:** as-of-date entity resolution (ambiguous/unresolved/drift flags), a reliability/orchestration plan (`docs/RELIABILITY.md`), and typed-artifact lookup with **anti-fabrication** — `not_disclosed` vs grounded values (`docs/ARTIFACTS.md`).
-- [ ] **Slice 5 — settleability filter + baseline-vs-treatment experiment + writeup.**
+- [x] **Slice 5 — settleability filter + baseline-vs-treatment experiment:** [**docs/EXPERIMENT.md**](docs/EXPERIMENT.md). Section-aware extraction surfaces ~2× more grounded candidates (a **coverage** win; per-event **grounding ~tied** — reported honestly, hypothesis not confirmed). Settleability ≈ 0: most filing statements are risk/historical, not contractable — the earned insight is to target forward-looking *dated* statements.
 
 ## Stack
 Python · Anthropic Claude (SDK) · Chroma · sentence-transformers · **Arize Phoenix + OpenTelemetry** · LLM-as-judge evals.
