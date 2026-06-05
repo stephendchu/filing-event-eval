@@ -32,5 +32,10 @@ class Config:
     # --- pipeline budget ---
     max_sections: int = 40   # cap sections processed per filing (cost guard)
 
+    # --- reliability / retries ---
+    llm_max_retries: int = 6      # Anthropic SDK retries (exp backoff, respects Retry-After)
+    request_timeout: int = 120    # per-call timeout (seconds)
+    edgar_max_attempts: int = 4   # EDGAR GET attempts on 429/5xx (backoff); 4xx fails fast
+
 
 CFG = Config()
