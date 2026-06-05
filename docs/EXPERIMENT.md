@@ -81,6 +81,24 @@ a reviewer trusts the *next* claim because this one was reported honestly. The
 project's value isn't "section-aware wins"; it's the **faithfulness eval,
 anti-fabrication, and reliability** around it — and the discipline to call a null a null.
 
+## Conclusion: settlement-grade extraction needs structured data
+The pilot exposed a **~46% ungrounded rate on Apple** (vs ~9% on Microsoft), and the
+cause is **HTML parsing, not the model** — mangled sections produce quotes that can't
+be verified. The honest conclusion: **HTML-parse-then-extract is not settlement-grade.**
+You can't settle a contract on a number whose citation is unverifiable half the time.
+
+The settlement-grade architecture:
+- **Numbers from XBRL** — SEC filings ship machine-readable, *tagged* financial facts
+  (`data.sec.gov/api/xbrl/…`); R&D = $34,550M returns as an exact value/unit/period.
+  **Zero hallucination for quantitative facts.**
+- **Narrative from the LLM, behind the grounding gate** — forward-looking/soft text
+  (which XBRL doesn't cover) is extracted by the model, but **nothing ungrounded settles.**
+- **Nothing settles on a hallucination.**
+
+So the real finding isn't "the extractor works" — it's *"raw HTML parsing isn't
+settlement-grade; pull numbers from structured XBRL and gate the narrative on
+grounding."* That's the line between a demo and something you'd put money on.
+
 ## Caveats
 n = 2, single fiscal period; grounding is a strict *verbatim* check (no judge bias,
 but it doesn't credit semantically-supported paraphrases); section parsing is

@@ -10,6 +10,14 @@ Built as a learning + portfolio project for AI-evals roles (W&B Weave / Arize /
 Galileo). Aligns with regulated-markets + event-contracts domain. **Public data
 only (SEC EDGAR); no proprietary content.**
 
+![Per symbol: collected vs grounded vs hallucinated](reports/figures/hallucination.png)
+
+*The faithfulness reality: of what the agent extracts, how much has a **verifiable**
+citation vs a **fabricated** one. AAPL's ~46% ungrounded is **parsing-driven** (MSFT,
+clean parse: ~9%) — which is exactly why settlement-grade extraction pulls numbers
+from **structured XBRL**, not HTML. The grounding eval makes this visible; the gate
+refuses to act on it.*
+
 ## What this demonstrates
 - **Faithfulness / hallucination detection** — every event must carry a citation
   that's *verbatim-verifiable* in the source; ungrounded citations are flagged.
@@ -119,6 +127,7 @@ granularity-matched re-draft + human verification.*
 - [x] **Slice 2 — extraction:** cited per-section event extraction (treatment) + naive baseline (control).
 - [x] **Slice 3 — eval + observability:** faithfulness (grounding rate) + Phoenix/OTel tracing across the pipeline.
 - [x] **Slice 4 — entity resolution + reliability + typed artifacts:** as-of-date entity resolution (ambiguous/unresolved/drift flags), a reliability/orchestration plan (`docs/RELIABILITY.md`), and typed-artifact lookup with **anti-fabrication** — `not_disclosed` vs grounded values (`docs/ARTIFACTS.md`).
+- [ ] **Slice 6 — XBRL numeric path (the settlement-grade fix):** pull quantitative facts from SEC **XBRL** (exact, zero-hallucination); the LLM handles only narrative, behind the grounding gate. *(diagnosed in Slice 5: the ~46% ungrounded rate is HTML-parsing-driven, not the model.)*
 - [x] **Slice 5 — settleability filter + baseline-vs-treatment experiment:** [**docs/EXPERIMENT.md**](docs/EXPERIMENT.md). **An honest null** (n=2): section-aware extraction did *not* improve faithfulness (grounding ~tied), and its coverage edge is largely a *truncation artifact*. Settleability ≈ 0 (most filing statements are risk/historical, not contractable). The value is the eval + anti-fabrication + reliability around it — and the discipline to call a null a null.
 
 ## Stack
