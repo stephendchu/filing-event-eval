@@ -10,6 +10,17 @@ Built as a learning + portfolio project for AI-evals roles (W&B Weave / Arize /
 Galileo). Aligns with regulated-markets + event-contracts domain. **Public data
 only (SEC EDGAR); no proprietary content.**
 
+## At a glance
+| | |
+|---|---|
+| **Pipeline** | ingest → extract+cite → ground → resolve (as-of-date) → settle → measure |
+| **Faithfulness** | grounding eval + the hallucination chart below (catches real fabrications) |
+| **Anti-fabrication** | `not_disclosed` on undisclosed metrics (Apple's iPhone unit sales) |
+| **Reliability** | retries + backoff (LLM **and** EDGAR layers), graceful absence, failures as traced signals |
+| **Observability** | Phoenix + OpenTelemetry across every stage and LLM call |
+| **Honesty** | the experiment reported as the **null it is**; the XBRL settlement-grade conclusion |
+| **Tests** | 41 passing |
+
 ![Per symbol: collected vs grounded vs hallucinated](reports/figures/hallucination.png)
 
 *The faithfulness reality: of what the agent extracts, how much has a **verifiable**
