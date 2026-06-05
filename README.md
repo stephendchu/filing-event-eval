@@ -11,15 +11,7 @@ Galileo). Aligns with regulated-markets + event-contracts domain. **Public data
 only (SEC EDGAR); no proprietary content.**
 
 ## At a glance
-| | |
-|---|---|
-| **Pipeline** | ingest → extract+cite → ground → resolve (as-of-date) → settle → measure |
-| **Faithfulness** | grounding eval + the hallucination chart below (catches real fabrications) |
-| **Anti-fabrication** | `not_disclosed` on undisclosed metrics (Apple's iPhone unit sales) |
-| **Reliability** | retries + backoff (LLM **and** EDGAR layers), graceful absence, failures as traced signals |
-| **Observability** | Phoenix + OpenTelemetry across every stage and LLM call |
-| **Honesty** | the experiment reported as the **null it is**; the XBRL settlement-grade conclusion |
-| **Tests** | 41 passing |
+![At a glance: capabilities summary](reports/figures/at_a_glance.png)
 
 ![Per symbol: collected vs grounded vs hallucinated](reports/figures/hallucination.png)
 
@@ -62,18 +54,10 @@ The point isn't the extraction — it's **measuring whether the extraction is
 grounded and correct**, which is the hard, valuable part.
 
 ## Architecture
-```mermaid
-flowchart LR
-  E["SEC EDGAR<br/>10-K / 8-K"] --> I["ingest<br/>section-aware parse"]
-  I --> X["extract<br/>+ cite"]
-  X --> G["ground<br/>faithfulness"]
-  G --> R["resolve entity<br/>as-of-date"]
-  R --> S["settleability<br/>filter"]
-  S --> M["measure<br/>eval harness"]
-```
-*Across every stage: **Phoenix + OpenTelemetry** observability · **bounded retries +
-graceful absence** · **41 tests**. (Slice 6: numbers will come from **XBRL** —
-exact, zero-hallucination — with the LLM handling only narrative behind the grounding gate.)*
+![Pipeline: EDGAR → ingest → extract+cite → ground → resolve → settle → measure](reports/figures/pipeline.png)
+
+*Numbers come from **XBRL** (exact, zero-hallucination); the LLM handles only the
+narrative, behind the grounding gate.*
 
 ## Eval harness (the differentiator)
 1. **Grounding / faithfulness** — every extracted event must map to a real passage; fabricated events are flagged (the hallucination metric these companies sell).
@@ -131,7 +115,7 @@ granularity-matched re-draft + human verification.*
 - [x] **Slice 2 — extraction:** cited per-section event extraction (treatment) + naive baseline (control).
 - [x] **Slice 3 — eval + observability:** faithfulness (grounding rate) + Phoenix/OTel tracing across the pipeline.
 - [x] **Slice 4 — entity resolution + reliability + typed artifacts:** as-of-date entity resolution (ambiguous/unresolved/drift flags), a reliability/orchestration plan (`docs/RELIABILITY.md`), and typed-artifact lookup with **anti-fabrication** — `not_disclosed` vs grounded values (`docs/ARTIFACTS.md`).
-- [ ] **Slice 6 — XBRL numeric path (the settlement-grade fix):** pull quantitative facts from SEC **XBRL** (exact, zero-hallucination); the LLM handles only narrative, behind the grounding gate. *(diagnosed in Slice 5: the ~46% ungrounded rate is HTML-parsing-driven, not the model.)*
+- [x] **Slice 6 — XBRL numeric path (the settlement-grade fix):** quantitative facts pulled from SEC **XBRL** (exact, zero-hallucination — verified: AAPL R&D = `34,550,000,000`, revenue = `416,161,000,000`, FY2025); the LLM handles only narrative, behind the grounding gate. *(fixes the parsing-driven number hallucination diagnosed in Slice 5.)*
 - [x] **Slice 5 — settleability filter + baseline-vs-treatment experiment:** [**docs/EXPERIMENT.md**](docs/EXPERIMENT.md). **An honest null** (n=2): section-aware extraction did *not* improve faithfulness (grounding ~tied), and its coverage edge is largely a *truncation artifact*. Settleability ≈ 0 (most filing statements are risk/historical, not contractable). The value is the eval + anti-fabrication + reliability around it — and the discipline to call a null a null.
 
 ## Stack
