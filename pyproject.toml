@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "filing-event-eval"
+version = "0.1.0"
+description = "AI for event-contract sourcing from SEC filings — grounded extraction, faithfulness evals, anti-fabrication, reliability, and observability."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Stephen Chu" }]
+dependencies = [
+    "anthropic>=0.40",
+    "python-dotenv>=1.0",
+    "httpx>=0.27",
+    "arize-phoenix>=5.0",
+    "openinference-instrumentation-anthropic>=0.1",
+    "opentelemetry-sdk>=1.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+# Finds the `rageval` package in src/, so `pip install -e .` makes it importable
+# anywhere — no PYTHONPATH needed.

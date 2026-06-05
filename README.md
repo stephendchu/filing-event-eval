@@ -123,12 +123,12 @@ Python · Anthropic Claude (SDK) · Chroma · sentence-transformers · **Arize P
 
 ## Quickstart (WSL / Linux / macOS)
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+python3 -m venv .venv && source .venv/bin/activate   # or: uv venv && source .venv/bin/activate
+pip install -e ".[dev]"       # installs `rageval` (+ pytest) — no PYTHONPATH needed
 cp .env.example .env          # add ANTHROPIC_API_KEY and your SEC_USER_AGENT
 
 # Traced pipeline: ingest -> cited extraction -> faithfulness eval
-PYTHONPATH=src python -m rageval.pipeline --ticker AAPL --sections 3
+python -m rageval.pipeline --ticker AAPL --sections 3
 ```
 
 ## Learn the tracing (read this while it runs)
@@ -144,13 +144,13 @@ Claude call** (prompt, token counts, latency).
   that URL in your Windows browser.
 
 ```bash
-PHOENIX=1 PYTHONPATH=src python -m rageval.pipeline --ticker AAPL --sections 3
+PHOENIX=1 python -m rageval.pipeline --ticker AAPL --sections 3
 ```
 Look at the root `pipeline` span, its `extract.section` children, and the nested
 **Claude call** spans inside them — that nesting *is* the agent's execution path.
 
 ## Running the tests
 ```bash
-PYTHONPATH=src python -m pytest tests/ -q     # offline; no API key needed
+pytest -q     # offline; no API key needed
 ```
 *Learning + portfolio project — public, SEC EDGAR data only, no proprietary content.*
