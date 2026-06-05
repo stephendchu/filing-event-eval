@@ -41,6 +41,22 @@ cheapest, most objective hallucination check — no LLM judge, just string match
   — not binary, no deadline) and **historical facts** ("R&D *increased* 10%" — already
   happened, not a future event). Most 10-K statements simply **aren't contractable**.
 
+## Worked example: a hallucination grounding caught
+On Apple's Item 1A, the model extracted *"Apple's effective tax rate decreased
+significantly from 24.1%…"* with the citation *"The Company's effective tax rate
+for 2025 was lower compared to 2024 **due to a**…"*. But the filing presents the tax
+rate as a **table of numbers** — *"…effective tax rate … for 2025, 2024 and 2023 were
+as follows (dollars in millions): 2025 2024 2023 …"*. The model **invented a prose
+explanation that isn't in the document.** The verbatim grounding check returned
+**False → flagged** — a $0 string-match catching a genuine fabrication. Across two
+Apple sections grounding caught **4 of ~15** events this way (the filing had a table;
+the model wrote a sentence).
+
+*Nuance:* the check is **strict/verbatim**, so it also flags lightly-paraphrased
+quotes that are *semantically* supported — making grounding a high-precision
+faithfulness **floor** (a softer "is the claim supported?" entailment check, which
+needs a judge, sits one level up).
+
 ## The insight
 Generic extraction pulls *risk + historical* events, which are structurally
 non-settleable. **To source event-contract candidates, extraction must specifically
