@@ -62,18 +62,10 @@ The point isn't the extraction — it's **measuring whether the extraction is
 grounded and correct**, which is the hard, valuable part.
 
 ## Architecture
-```mermaid
-flowchart LR
-  E["SEC EDGAR<br/>10-K / 8-K"] --> I["ingest<br/>section-aware parse"]
-  I --> X["extract<br/>+ cite"]
-  X --> G["ground<br/>faithfulness"]
-  G --> R["resolve entity<br/>as-of-date"]
-  R --> S["settleability<br/>filter"]
-  S --> M["measure<br/>eval harness"]
-```
-*Across every stage: **Phoenix + OpenTelemetry** observability · **bounded retries +
-graceful absence** · **41 tests**. (Slice 6: numbers will come from **XBRL** —
-exact, zero-hallucination — with the LLM handling only narrative behind the grounding gate.)*
+![Pipeline: EDGAR → ingest → extract+cite → ground → resolve → settle → measure](reports/figures/pipeline.png)
+
+*Numbers come from **XBRL** (exact, zero-hallucination); the LLM handles only the
+narrative, behind the grounding gate.*
 
 ## Eval harness (the differentiator)
 1. **Grounding / faithfulness** — every extracted event must map to a real passage; fabricated events are flagged (the hallucination metric these companies sell).
