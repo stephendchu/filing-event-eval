@@ -15,11 +15,12 @@ only (SEC EDGAR); no proprietary content.**
 
 ![Per symbol: collected vs grounded vs hallucinated](reports/figures/hallucination.png)
 
-*The faithfulness reality: of what the agent extracts, how much has a **verifiable**
-citation vs a **fabricated** one. AAPL's ~46% ungrounded is **parsing-driven** (MSFT,
-clean parse: ~9%) — which is exactly why settlement-grade extraction pulls numbers
-from **structured XBRL**, not HTML. The grounding eval makes this visible; the gate
-refuses to act on it.*
+*The faithfulness reality (**section-aware extraction** — the pipeline's path): of
+what the agent extracts, how much has a **verifiable** citation vs a **fabricated**
+one. AAPL's ~46% ungrounded is **parsing-driven** (MSFT, clean parse: ~9%) — which is
+exactly why settlement-grade extraction pulls numbers from **structured XBRL**, not
+HTML. The grounding eval makes this visible; the gate refuses to act on it.
+(Whole-filing vs section-aware are compared in [docs/EXPERIMENT.md](docs/EXPERIMENT.md).)*
 
 ## What this demonstrates
 - **Faithfulness / hallucination detection** — every event must carry a citation
