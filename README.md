@@ -115,8 +115,8 @@ granularity-matched re-draft + human verification.*
 - [x] **Slice 2 — extraction:** cited per-section event extraction (treatment) + naive baseline (control).
 - [x] **Slice 3 — eval + observability:** faithfulness (grounding rate) + Phoenix/OTel tracing across the pipeline.
 - [x] **Slice 4 — entity resolution + reliability + typed artifacts:** as-of-date entity resolution (ambiguous/unresolved/drift flags), a reliability/orchestration plan (`docs/RELIABILITY.md`), and typed-artifact lookup with **anti-fabrication** — `not_disclosed` vs grounded values (`docs/ARTIFACTS.md`).
-- [x] **Slice 6 — XBRL numeric path (the settlement-grade fix):** quantitative facts pulled from SEC **XBRL** (exact, zero-hallucination — verified: AAPL R&D = `34,550,000,000`, revenue = `416,161,000,000`, FY2025); the LLM handles only narrative, behind the grounding gate. *(fixes the parsing-driven number hallucination diagnosed in Slice 5.)*
 - [x] **Slice 5 — settleability filter + baseline-vs-treatment experiment:** [**docs/EXPERIMENT.md**](docs/EXPERIMENT.md). **An honest null** (n=2): section-aware extraction did *not* improve faithfulness (grounding ~tied), and its coverage edge is largely a *truncation artifact*. Settleability ≈ 0 (most filing statements are risk/historical, not contractable). The value is the eval + anti-fabrication + reliability around it — and the discipline to call a null a null.
+- [x] **Slice 6 — XBRL numeric path (the settlement-grade fix):** quantitative facts pulled from SEC **XBRL** (exact, zero-hallucination — verified: AAPL R&D = `34,550,000,000`, revenue = `416,161,000,000`, FY2025); the LLM handles only narrative, behind the grounding gate. *(fixes the parsing-driven number hallucination diagnosed in Slice 5.)*
 
 ## Stack
 Python · Anthropic Claude (SDK) · Chroma · sentence-transformers · **Arize Phoenix + OpenTelemetry** · LLM-as-judge evals.
