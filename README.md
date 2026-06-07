@@ -1,5 +1,8 @@
 # filing-event-eval
 
+> **📊 Measure** · part 2 of a 3-part series on measuring & governing AI in regulated domains —
+> [🔎 Validate](https://github.com/stephendchu/agentic-test-eval) · **Measure (here)** · [🛡 Govern](https://github.com/stephendchu/assay)
+
 An **agent that extracts events from SEC filings (10-K / 8-K) for event-contract
 markets** — each extracted event grounded in a citation back to the source
 passage — with a **rigorous evaluation harness** (faithfulness, extraction
