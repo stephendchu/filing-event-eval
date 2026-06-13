@@ -1,7 +1,7 @@
 # filing-event-eval
 
 > **📊 Measure** · part 2 of a 3-part series on measuring & governing AI in regulated domains —
-> [🔎 Validate](https://github.com/stephendchu/agentic-test-eval) · **Measure (here)** · [🛡 Govern](https://github.com/stephendchu/assay)
+> [🔎 Validate](https://stephendchu.github.io/agentic-test-eval/) · **Measure (here)** · [🛡 Govern](https://stephendchu.github.io/assay/)
 
 ## The problem
 
