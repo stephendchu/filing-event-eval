@@ -9,6 +9,10 @@ Companies file mandatory disclosures with the SEC — earnings releases, materia
 
 A confident fabrication is worse than no answer at all. If an AI says Apple's iPhone unit sales were X — and Apple stopped reporting that number in 2018 — that's not a hallucination caught after the fact, that's a system that never should have answered.
 
+**On real EDGAR filings, the grounding gate flagged 46% of AAPL claims as un-citable (HTML parse) versus 9% on MSFT (clean XBRL parse) — the gap that decides whether you can trust the output.**
+
+![Ungrounded claim rate: AAPL 46% (HTML parse) vs MSFT 9% (clean XBRL parse)](assets/hallucination-rates.svg)
+
 ## What this builds
 
 An SEC filing extraction agent with a rigorous evaluation harness: every claim the model makes must be traceable to verbatim evidence in the source document. Claims that can't be traced are flagged and blocked before they reach any downstream system.
@@ -18,12 +22,12 @@ An SEC filing extraction agent with a rigorous evaluation harness: every claim t
 - A filing presented a tax rate in a **table**. The model invented a **prose sentence** about it — flagged by a `$0` string-match check. No table row, no answer.
 - Asked for Apple's iPhone unit sales: the system returns `not_disclosed` — because Apple stopped reporting that metric in 2018, and the source doesn't contain it. A famous number that everyone knows is still not returned unless it's grounded in *this filing*.
 
-## What it measures
+## What I found
 
-- **Faithfulness / hallucination rate** — of what the agent extracts, how much has a verifiable verbatim citation vs a fabricated one. AAPL's ~46% ungrounded is parsing-driven (MSFT on a clean parse: ~9%) — which is why numbers come from structured XBRL, not HTML.
+- **Faithfulness / hallucination rate** — of what the agent extracts, how much has a verifiable verbatim citation vs a fabricated one (the 46% vs 9% above). The gap is parsing-driven — which is why numbers come from structured XBRL, not HTML.
 - **Anti-fabrication** — `not_disclosed` behavior verified on real EDGAR filings. Full detail: [docs/ARTIFACTS.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/ARTIFACTS.md)
 - **Production reliability** — bounded retries with backoff at the LLM *and* EDGAR layers; every failure a measured, traced signal — never silent, never fabricated. [docs/RELIABILITY.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/RELIABILITY.md)
-- **Observability** — Phoenix + OpenTelemetry spans across every stage: one span per Claude call (prompt, tokens, latency), one per pipeline stage.
+- **Observability** — every pipeline stage and every Claude call is captured as an OpenTelemetry span (prompt, tokens, latency) and read in **Arize Phoenix** at http://localhost:6006 (`PHOENIX=1`). Instrumentation is **OpenInference** on the Anthropic SDK — open-standard spans, with a console exporter always on as a fallback. Built on standards, not glue code.
 - **Honest null** — a controlled baseline-vs-treatment experiment reported as the null it is: section-aware extraction did *not* improve faithfulness, and its coverage edge is a truncation artifact (n=2). [docs/EXPERIMENT.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/EXPERIMENT.md)
 
 ## The grounding gate
