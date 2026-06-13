@@ -43,19 +43,7 @@ Every extracted event must cite a verbatim span from the filing. No citation = b
 
 ## How the grounding gate works
 
-```mermaid
-flowchart TD
-    EDGAR["SEC EDGAR filing"] --> PARSE{"parse layer"}
-    PARSE -->|"XBRL — clean structure"| XBRL["structured data\n9% ungrounded (MSFT)"]
-    PARSE -->|"HTML — messy prose"| HTML["raw text\n46% ungrounded (AAPL)"]
-    XBRL --> LLM["LLM extraction\nClaude · temp 0 · prompt logged"]
-    HTML --> LLM
-    LLM --> CITE["claimed events\neach with a verbatim citation"]
-    CITE --> GATE{"grounding gate\n$0 string-match"}
-    GATE -->|"citation found verbatim"| PASS["✓ passes\nevent recorded"]
-    GATE -->|"citation not found"| FLAG["✗ flagged\nblocked before downstream"]
-    GATE -->|"metric not in filing"| ND["not_disclosed\nnever fabricated"]
-```
+![How the grounding gate works](assets/grounding-gate.png)
 
 ## Design decisions
 
