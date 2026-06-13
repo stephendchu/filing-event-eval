@@ -57,6 +57,16 @@ flowchart TD
     GATE -->|"metric not in filing"| ND["not_disclosed\nnever fabricated"]
 ```
 
+## Design decisions
+
+**$0 string-match for the grounding gate, not semantic similarity.** Semantic similarity would let paraphrases of numbers that don't appear in the filing pass — a fabricated sentence that "sounds right" would score high similarity. Verbatim citation is unambiguous: either the exact span is present or it isn't. The gate is designed to be wrong-safe, not right-permissive.
+
+**`not_disclosed` instead of a low-confidence answer.** A hedged guess (*"iPhone units may be approximately X"*) gives a downstream system something to act on that shouldn't be acted on. The typed sentinel communicates absence of evidence, not uncertain evidence.
+
+**Parse layer as the primary explanatory variable.** The 46% vs 9% gap isn't an LLM quality difference — it's a pre-LLM parsing difference. XBRL gives clean, machine-readable anchors; HTML forces the model to infer from prose where numbers don't have structured positions. Diagnosing the bottleneck, not just reporting error rate, is the eval's actual contribution.
+
+**OpenInference instrumentation on the SDK, not custom spans.** Open-standard OTel spans are readable in any OTel-compatible backend — Phoenix today, anything else later. Custom instrumentation would lock the observability to a specific vendor.
+
 ## Quickstart
 
 ```bash
