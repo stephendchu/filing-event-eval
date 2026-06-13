@@ -3,158 +3,66 @@
 > **📊 Measure** · part 2 of a 3-part series on measuring & governing AI in regulated domains —
 > [🔎 Validate](https://github.com/stephendchu/agentic-test-eval) · **Measure (here)** · [🛡 Govern](https://github.com/stephendchu/assay)
 
-An **agent that extracts events from SEC filings (10-K / 8-K) for event-contract
-markets** — each extracted event grounded in a citation back to the source
-passage — with a **rigorous evaluation harness** (faithfulness, extraction
-accuracy, citation correctness) and full **observability** (Arize Phoenix +
-OpenTelemetry).
+## The problem
 
-Built as a learning + portfolio project for AI-evals roles (W&B Weave / Arize /
-Galileo). Aligns with regulated-markets + event-contracts domain. **Public data
-only (SEC EDGAR); no proprietary content.**
+Companies file mandatory disclosures with the SEC — earnings releases, material events, risk factors. These documents are long, messy, and full of information that matters for decisions. An AI agent can read them quickly. The hard part is knowing when to trust what it extracted.
 
-## At a glance
-![At a glance: capabilities summary](reports/figures/at_a_glance.png)
+A confident fabrication is worse than no answer at all. If an AI says Apple's iPhone unit sales were X — and Apple stopped reporting that number in 2018 — that's not a hallucination caught after the fact, that's a system that never should have answered.
 
-![Per symbol: collected vs grounded vs hallucinated](reports/figures/hallucination.png)
+## What this builds
 
-*The faithfulness reality (**section-aware extraction** — the pipeline's path): of
-what the agent extracts, how much has a **verifiable** citation vs a **fabricated**
-one. AAPL's ~46% ungrounded is **parsing-driven** (MSFT, clean parse: ~9%) — which is
-exactly why settlement-grade extraction pulls numbers from **structured XBRL**, not
-HTML. The grounding eval makes this visible; the gate refuses to act on it.
-(Whole-filing vs section-aware are compared in [docs/EXPERIMENT.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/EXPERIMENT.md).)*
+An SEC filing extraction agent with a rigorous evaluation harness: every claim the model makes must be traceable to verbatim evidence in the source document. Claims that can't be traced are flagged and blocked before they reach any downstream system.
 
-## What this demonstrates
-- **Faithfulness / hallucination detection** — every event must carry a citation
-  that's *verbatim-verifiable* in the source; ungrounded citations are flagged.
-  (Caught a real fabrication: a filing presented a tax rate as a **table**, the model
-  invented a **prose sentence** explaining it — flagged by a $0 string-match.)
-- **Anti-fabrication** — asked for a metric a company *stopped disclosing* (Apple's
-  iPhone unit sales, since 2018), the system returns `not_disclosed`, never a number.
-  ([docs/ARTIFACTS.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/ARTIFACTS.md))
-- **Production reliability** — graceful absence handling, **bounded retries with
-  backoff** at the LLM *and* EDGAR layers, failures recorded as *measured, traced*
-  signals. ([docs/RELIABILITY.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/RELIABILITY.md))
-- **Observability** — Phoenix + OpenTelemetry spans across every stage and every
-  LLM call (prompt, tokens, latency).
-- **Honest evaluation** — a controlled baseline-vs-treatment experiment reported as
-  the **null it is**: section-aware extraction did *not* improve faithfulness, and
-  its coverage edge is a *truncation artifact* (n=2). ([docs/EXPERIMENT.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/EXPERIMENT.md))
+**Two real examples from the actual output:**
 
-The throughline: **building filing-extraction agents whose behavior is measured,
-traced, and reported truthfully — including when the result is a null.**
+- A filing presented a tax rate in a **table**. The model invented a **prose sentence** about it — flagged by a `$0` string-match check. No table row, no answer.
+- Asked for Apple's iPhone unit sales: the system returns `not_disclosed` — because Apple stopped reporting that metric in 2018, and the source doesn't contain it. A famous number that everyone knows is still not returned unless it's grounded in *this filing*.
 
-## The task
-Given a company's 10-K (or 8-K), the agent identifies the **events** described —
-material events, risk factors, and forward-looking statements — and for each
-returns:
-- a short **event statement** (e.g. "Company expects to close the X acquisition by Q3"),
-- a **citation** (the exact source passage it came from),
-- a **type** (material event / risk factor / forward-looking),
-- (later) a **binary resolvable form** for event contracts ("Will X close by Q3?") + a confidence.
+## What it measures
 
-The point isn't the extraction — it's **measuring whether the extraction is
-grounded and correct**, which is the hard, valuable part.
+- **Faithfulness / hallucination rate** — of what the agent extracts, how much has a verifiable verbatim citation vs a fabricated one. AAPL's ~46% ungrounded is parsing-driven (MSFT on a clean parse: ~9%) — which is why numbers come from structured XBRL, not HTML.
+- **Anti-fabrication** — `not_disclosed` behavior verified on real EDGAR filings. Full detail: [docs/ARTIFACTS.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/ARTIFACTS.md)
+- **Production reliability** — bounded retries with backoff at the LLM *and* EDGAR layers; every failure a measured, traced signal — never silent, never fabricated. [docs/RELIABILITY.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/RELIABILITY.md)
+- **Observability** — Phoenix + OpenTelemetry spans across every stage: one span per Claude call (prompt, tokens, latency), one per pipeline stage.
+- **Honest null** — a controlled baseline-vs-treatment experiment reported as the null it is: section-aware extraction did *not* improve faithfulness, and its coverage edge is a truncation artifact (n=2). [docs/EXPERIMENT.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/EXPERIMENT.md)
 
-## Architecture
-![Pipeline: EDGAR → ingest → extract+cite → ground → resolve → settle → measure](reports/figures/pipeline.png)
+## The grounding gate
 
-*Numbers come from **XBRL** (exact, zero-hallucination); the LLM handles only the
-narrative, behind the grounding gate.*
+Every extracted event must cite a verbatim span from the filing. No citation = blocked:
 
-## Eval harness (the differentiator)
-1. **Grounding / faithfulness** — every extracted event must map to a real passage; fabricated events are flagged (the hallucination metric these companies sell).
-2. **Extraction precision / recall** — vs a small hand-labeled reference set (or a stronger model as silver reference).
-3. **Citation accuracy** — does the cited span actually support the event? (entailment check, LLM-judge.)
-4. **(Extension) Event-contract calibration** — events → binary "will it happen?" questions; score stated confidence vs realized outcome over time (Brier score / calibration curve). This isolates decision quality from noise.
+1. LLM extracts events with citations
+2. A `$0` string-match check verifies each citation exists in the source
+3. Unverifiable citations are flagged — never silently passed through
+4. Genuinely absent metrics return `not_disclosed`, not an invented value
 
-## What we extract — and what happens when it's missing
-The value is in *specific typed artifacts*, and the reliability question is **what
-happens when the one you want isn't there.** Each artifact has a **defined absence
-behavior**, and every failure is a **measured, traced signal** — it flows into the
-same Phoenix/OpenTelemetry spans and eval metrics as everything else, never silent
-and never fabricated.
-
-| Artifact | When present | When missing / wrong |
-|---|---|---|
-| **Quantitative fact** (e.g. "revenue up") | value + unit + period + **grounded citation** | not in filing → `not_disclosed` (never invented); no unit/period → `incomplete`; in a table → `low_confidence` |
-| **Forward-looking commitment** | claim + deadline + settlement source | no deadline → `not_settleable`; vague/conditional → `low_settleability` |
-| **Entity / issuer** | CIK + ticker, resolved **as-of the filing date** | ambiguous → candidates (never guess); old filing → `asof_risk` |
-| **Legal / regulatory** | matter + status | open outcome → flagged, kept as an open question |
-
-**Anti-fabrication, proven on real data:** asked for Apple's *iPhone unit sales*
-(which Apple stopped disclosing in 2018), the system returns **`not_disclosed`** —
-and won't surface even a famous number unless it's grounded in the text. Asked for
-*R&D expense*, it returns the grounded figure (`34,550`, FY25).
-
-→ Full detail: **[docs/ARTIFACTS.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/ARTIFACTS.md)** (artifacts + absence handling) ·
-**[docs/RELIABILITY.md](https://github.com/stephendchu/filing-event-eval/blob/main/docs/RELIABILITY.md)** (failures as measured signals).
-
-## Measuring recall — a human-verified gold set
-Grounding measures **precision** ("are the citations real?"). It does *not* measure
-**recall** ("did we find everything that's there?"). Recall needs a **reference list**
-of every event that *should* be found — a gold set — and how you build it matters:
-
-**The trap:** if an AI builds the gold set, you're doing *AI grading AI* — and if the
-reference model shares the system's blind spots, they miss the same buried events and
-recall looks **falsely perfect**. An unverified AI gold set is worthless.
-
-**The workflow** (`scripts/build_gold_set.py`):
-1. **AI drafts** — exhaustively lists candidate events + citations (the word-by-word grunt work).
-2. **A human verifies** — keep/drop, fix citations, **add** anything missed. *That pass breaks the circularity.*
-3. **Match granularity** — the reference must define "an event" the *same way* as the
-   system (atomizing every table cell into 156 items vs the system's 26 consolidated
-   events makes recall meaningless).
-4. **Compute precision *and* recall** against the verified gold.
-
-**Caveat (state it):** even human+AI can miss a deeply-buried item, so recall is "vs the
-best reference we could assemble," not vs omniscience.
-
-*Status: an AI-drafted AAPL gold set exists (`reports/gold/`), pending a
-granularity-matched re-draft + human verification.*
-
-## Build slices
-- [x] **Slice 1 — EDGAR ingest:** fetch a 10-K from EDGAR (ticker → CIK → latest), section-aware parse by Item. *(Deterministic — vector store deferred until cross-filing queries justify it.)*
-- [x] **Slice 2 — extraction:** cited per-section event extraction (treatment) + naive baseline (control).
-- [x] **Slice 3 — eval + observability:** faithfulness (grounding rate) + Phoenix/OTel tracing across the pipeline.
-- [x] **Slice 4 — entity resolution + reliability + typed artifacts:** as-of-date entity resolution (ambiguous/unresolved/drift flags), a reliability/orchestration plan (`docs/RELIABILITY.md`), and typed-artifact lookup with **anti-fabrication** — `not_disclosed` vs grounded values (`docs/ARTIFACTS.md`).
-- [x] **Slice 5 — settleability filter + baseline-vs-treatment experiment:** [**docs/EXPERIMENT.md**](https://github.com/stephendchu/filing-event-eval/blob/main/docs/EXPERIMENT.md). **An honest null** (n=2): section-aware extraction did *not* improve faithfulness (grounding ~tied), and its coverage edge is largely a *truncation artifact*. Settleability ≈ 0 (most filing statements are risk/historical, not contractable). The value is the eval + anti-fabrication + reliability around it — and the discipline to call a null a null.
-- [x] **Slice 6 — XBRL numeric path (the settlement-grade fix):** quantitative facts pulled from SEC **XBRL** (exact, zero-hallucination — verified: AAPL R&D = `34,550,000,000`, revenue = `416,161,000,000`, FY2025); the LLM handles only narrative, behind the grounding gate. *(fixes the parsing-driven number hallucination diagnosed in Slice 5.)*
-
-## Stack
-Python · Anthropic Claude (SDK) · Chroma · sentence-transformers · **Arize Phoenix + OpenTelemetry** · LLM-as-judge evals.
-
-## Quickstart (WSL / Linux / macOS)
-```bash
-python3 -m venv .venv && source .venv/bin/activate   # or: uv venv && source .venv/bin/activate
-pip install -e ".[dev]"       # installs `rageval` (+ pytest) — no PYTHONPATH needed
-cp .env.example .env          # add ANTHROPIC_API_KEY and your SEC_USER_AGENT
-
-# Traced pipeline: ingest -> cited extraction -> faithfulness eval
-python -m rageval.pipeline --ticker AAPL --sections 3
-```
-
-## Learn the tracing (read this while it runs)
-A **span** is one timed unit of work with attributes (inputs/outputs/metadata).
-This pipeline emits spans for each stage (`ingest`, `extract`, `extract.section`,
-`eval.faithfulness`) and — via the Anthropic instrumentation — **one span per
-Claude call** (prompt, token counts, latency).
-
-- **Raw view (always on):** spans print to your terminal as JSON the moment they
-  finish — exactly what an observability tool ingests.
-- **Visual view (Phoenix UI):** add `PHOENIX=1` to see the same traces at
-  **http://localhost:6006** (a tree of nested spans + the LLM I/O). On WSL, open
-  that URL in your Windows browser.
+## Quickstart
 
 ```bash
-PHOENIX=1 python -m rageval.pipeline --ticker AAPL --sections 3
-```
-Look at the root `pipeline` span, its `extract.section` children, and the nested
-**Claude call** spans inside them — that nesting *is* the agent's execution path.
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # add ANTHROPIC_API_KEY and SEC_USER_AGENT
 
-## Running the tests
-```bash
-pytest -q     # offline; no API key needed
+# Traced pipeline: ingest → cited extraction → faithfulness eval
+PYTHONPATH=src python -m rageval.pipeline --ticker AAPL --sections 3
+
+# With Phoenix UI at http://localhost:6006
+PHOENIX=1 PYTHONPATH=src python -m rageval.pipeline --ticker AAPL --sections 3
+
+# Tests run offline, no API key needed
+PYTHONPATH=src python -m pytest tests/ -q
 ```
-*Learning + portfolio project — public, SEC EDGAR data only, no proprietary content.*
+
+## Layout
+
+```
+src/rageval/
+  pipeline.py      # end-to-end: ingest → extract → eval
+  grounding.py     # citation verification (the faithfulness gate)
+  artifacts.py     # typed artifact lookup with not_disclosed behavior
+  reliability.py   # retry, backoff, failure as measured signal
+  eval.py          # gold set, precision/recall, bootstrap CIs
+```
+
+Full docs: [docs/](https://github.com/stephendchu/filing-event-eval/tree/main/docs) — artifact absence handling, reliability plan, eval design.
+
+*Public / synthetic data only. SEC EDGAR public filings.*
