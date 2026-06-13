@@ -1,5 +1,7 @@
 # filing-event-eval
 
+[![Tests](https://github.com/stephendchu/filing-event-eval/actions/workflows/tests.yml/badge.svg)](https://github.com/stephendchu/filing-event-eval/actions/workflows/tests.yml)
+
 > **📊 Measure** · part 2 of a 3-part series on measuring & governing AI in regulated domains —
 > [🔎 Validate](https://stephendchu.github.io/agentic-test-eval/) · **Measure (here)** · [🛡 Govern](https://stephendchu.github.io/assay/)
 
@@ -68,5 +70,7 @@ src/rageval/
 ```
 
 Full docs: [docs/](https://github.com/stephendchu/filing-event-eval/tree/main/docs) — artifact absence handling, reliability plan, eval design.
+
+> **Honest measurement is the brand.** Every repo in this three-part series reports its own null or limitation, not a vanity number — here, section-aware extraction did *not* improve faithfulness (n=2), and it's reported as the null it is.
 
 *Public / synthetic data only. SEC EDGAR public filings.*
